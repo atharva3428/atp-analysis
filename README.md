@@ -25,4 +25,3 @@ Analyzes ATP tennis data (2000–2019) using Snowflake SQL, Snowpark Python, and
 ## License
 This project is non-commercial, under CC BY-NC-SA 4.0.
 
-## TEST

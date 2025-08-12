@@ -1,3 +1,4 @@
+config.json
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -209,14 +210,9 @@ __marimo__/
 # ATP project-specific
 *.csv                     # Exclude raw data (license compliance)
 matches_data_dictionary.txt
-config.json              # Snowflake credentials
 *.key
 *.secret
 *.json                   # Any sensitive JSON
-output/                  # Local output folders
-*.db
-*.log
-
 # Tableau files
 *.twb
 *.twbx

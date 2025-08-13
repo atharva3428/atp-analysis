@@ -8,7 +8,7 @@ Aggregated performance metrics by age group and year.
 | Column Name               | Data Type | Description                                           |
 |---------------------------|-----------|-------------------------------------------------------|
 | YEAR                      | Integer   | Year of performance (e.g., 2010).                     |
-| AGE_GROUP                 | Integer   | Age group of players (e.g., 22).                      |
+| AGE_GROUP                 | Integer   | Rounded age of players (e.g., 22).                    |
 | WIN_RATE                  | Float     | Average win rate (wins/matches) for the age group.    |
 | MATCHES                   | Integer   | Total matches played by the age group in the year.    |
 | AVG_FIRST_SERVE_PCT_BY_AGE| Float     | Average first serve percentage for the age group.     |
@@ -25,7 +25,7 @@ Raw match data from the ATP dataset (2000–2019).
 | TOURNEY_NAME          | String    | Name of the tournament (e.g., "Auckland").            |
 | SURFACE               | String    | Court surface (e.g., "Hard", "Clay", "Grass").        |
 | DRAW_SIZE             | Integer   | Number of players in the tournament draw.             |
-| TOURNEY_LEVEL         | String    | Tournament level (e.g., "A" for ATP, "G" for Grand Slam). |
+| TOURNEY_LEVEL         | String    | Tournament level (e.g., "A" for ATP, "G" for Grand Slam, "D" for Davis Cup). |
 | MATCH_NUM             | Integer   | Match number in the tournament.                      |
 | WINNER_ID             | Integer   | Player ID of the match winner.                       |
 | WINNER_SEED           | String    | Seed of the winner (e.g., "1", "UNSEEDED").          |
@@ -74,7 +74,7 @@ Raw match data from the ATP dataset (2000–2019).
 - **Links**:
   - `PLAYERS` via `WINNER_ID`, `LOSER_ID`, `WINNER_NAME`, `LOSER_NAME`.
   - `SERVE_EFFECTIVENESS_BY_SURFACE` via `WINNER_NAME`, `LOSER_NAME`, `SURFACE`.
-  - `TOURNAMENT_STATS` via `TOURNEY_ID`, `TOURNEY_NAME`.
+  - `TOURNAMENT_STATS` via `TOURNEY_NAME`, `TOURNEY_LEVEL`, `SURFACE`.
   - `AGE_IMPACT`, `TOURNAMENT_TRENDS`, `PLAYER_YEARLY_PERFORMANCE`, `PLAYER_PERFORMANCE_TRENDS`, `PLAYER_MATCHES_VIEW` via `YEAR` (derived from `TOURNEY_DATE`).
 
 ## PLAYERS (Table)
@@ -119,6 +119,7 @@ Overall player performance metrics.
 | HAND               | String    | Player’s dominant hand (e.g., "R", "L").         |
 | TOTAL_MATCHES      | Integer   | Total matches played across all years.          |
 | WINS               | Integer   | Total matches won across all years.             |
+| WIN_RATE           | Float     | Win rate (wins/total_matches) across all years.  |
 | TOTAL_ACES         | Integer   | Total aces served across all years.             |
 | TOTAL_DOUBLE_FAULTS| Integer   | Total double faults across all years.           |
 | AVG_FIRST_SERVE_PCT| Float     | Average first serve percentage across matches.   |
@@ -156,16 +157,17 @@ Detailed statistics per player from match data.
 
 | Column Name            | Data Type | Description                                      |
 |------------------------|-----------|--------------------------------------------------|
+| PLAYER_ID              | Integer   | Unique identifier for the player.                |
 | PLAYER_NAME            | String    | Name of the player (e.g., "Stan Wawrinka").      |
 | TOTAL_WINS             | Integer   | Total matches won across all years.             |
-| GRAND_SLAM_WINS        | Integer   | Number of Grand Slam titles won.                |
-| TOURNAMENTS_WON        | Integer   | Number of tournaments won.                      |
-| AVG_FIRST_SERVE_WIN_PCT| Float     | Average percentage of first serve points won.    |
-| AVG_ACE_PCT            | Float     | Average percentage of serves that are aces.      |
+| TOURNAMENTS_WON        | Integer   | Number of tournaments won (finals, ROUND = 'F'). |
+| GRAND_SLAM_WINS        | Integer   | Number of Grand Slam titles won (tourney_level = 'G', ROUND = 'F'). |
+| AVG_FIRST_SERVE_WIN_PCT| Float     | Average percentage of first serve points won across all matches. |
+| AVG_ACE_PCT            | Float     | Average percentage of serves that are aces across all matches. |
 
 - **Links**:
-  - `PLAYERS` via `PLAYER_NAME` (as `FIRST_NAME` + `LAST_NAME`).
-  - `MATCHES` via `PLAYER_NAME` (`WINNER_NAME`, `LOSER_NAME`).
+  - `PLAYERS` via `PLAYER_ID`, `PLAYER_NAME` (as `FIRST_NAME` + `LAST_NAME`).
+  - `MATCHES` via `PLAYER_ID` (`WINNER_ID`, `LOSER_ID`), `PLAYER_NAME` (`WINNER_NAME`, `LOSER_NAME`).
   - `PLAYER_PERFORMANCE`, `PLAYER_YEARLY_PERFORMANCE`, `PLAYER_CONSISTENCY`, `PLAYER_PERFORMANCE_TRENDS`, `PLAYER_MATCHES_VIEW` via `PLAYER_NAME`.
   - `SERVE_EFFECTIVENESS_BY_SURFACE` via `PLAYER_NAME`.
 
@@ -175,7 +177,7 @@ Yearly performance metrics for players.
 | Column Name        | Data Type | Description                                      |
 |--------------------|-----------|--------------------------------------------------|
 | PLAYER_NAME        | String    | Name of the player (e.g., "Rafael Nadal").       |
-| YEAR               | Integer   | Year of performance (e.g., 2010).               |
+| YEAR               | Integer   | Year of performance (e.g., 2010).                |
 | MATCHES            | Integer   | Total matches played in the year.               |
 | WINS               | Integer   | Number of matches won in the year.              |
 | WIN_PERCENTAGE     | Float     | Win rate (wins/matches) for the year.           |
@@ -196,8 +198,8 @@ First serve percentage statistics by player and surface.
 |------------------------|-----------|--------------------------------------------------------|
 | PLAYER_NAME            | String    | Name of the player (e.g., "Rafael Nadal").              |
 | SURFACE                | String    | Court surface (e.g., "Hard", "Clay", "Grass").          |
-| AVG_FIRST_SERVE_PCT    | Float     | Average first serve percentage across matches.         |
-| STDDEV_FIRST_SERVE_PCT | Float     | Standard deviation of first serve percentage.           |
+| AVG_FIRST_SERVE_PCT    | Float     | Average first serve percentage across matches on the surface. |
+| STDDEV_FIRST_SERVE_PCT | Float     | Standard deviation of first serve percentage on the surface. |
 
 - **Links**:
   - `PLAYER_PERFORMANCE_TRENDS` (Table/CSV) via `PLAYER_NAME`.
@@ -206,47 +208,48 @@ First serve percentage statistics by player and surface.
   - `MATCHES`, `TOURNAMENT_STATS` via `SURFACE`.
 
 ## TOURNAMENT_STATS (Table)
-Aggregated statistics for tournaments.
+Aggregated statistics for tournaments, excluding Davis Cup (tourney_level = 'D').
 
-| Column Name        | Data Type | Description                                      |
-|--------------------|-----------|--------------------------------------------------|
-| TOURNEY_NAME       | String    | Name of the tournament (e.g., "US Open").        |
-| TOURNEY_LEVEL      | String    | Tournament level (e.g., "A" for ATP, "G" for Grand Slam). |
-| SURFACE            | String    | Court surface (e.g., "Hard").                   |
-| TOTAL_MATCHES      | Integer   | Total matches played in the tournament.         |
-| AVG_MATCH_DURATION | Float     | Average match duration in minutes.              |
-| GRAND_SLAM_MATCHES | Integer   | Number of matches in Grand Slam tournaments.    |
+| Column Name            | Data Type | Description                                      |
+|------------------------|-----------|--------------------------------------------------|
+| TOURNEY_NAME           | String    | Name of the tournament (e.g., "US Open").        |
+| TOURNEY_LEVEL          | String    | Tournament level (e.g., "A" for ATP, "G" for Grand Slam). |
+| SURFACE                | String    | Court surface (e.g., "Hard").                   |
+| TOTAL_MATCHES          | Integer   | Total matches played in the tournament.         |
+| AVG_MATCH_DURATION     | Float     | Average match duration in minutes.              |
+| MOST_SUCCESSFUL_PLAYER | String    | Player with the most final wins (e.g., "Rafael Nadal"). |
+| TOP_WINNER_COUNT       | Integer   | Number of times the most successful player won the tournament (e.g., 14 for Nadal at Roland Garros). |
 
 - **Links**:
   - `MATCHES` via `TOURNEY_NAME`, `TOURNEY_LEVEL`, `SURFACE`.
-  - `TOURNAMENT_TRENDS` via `TOURNEY_NAME`.
+  - `TOURNAMENT_TRENDS` via `TOURNEY_NAME`, `TOURNEY_LEVEL`.
   - `SERVE_EFFECTIVENESS_BY_SURFACE` via `SURFACE`.
 
 ## TOURNAMENT_TRENDS (Table)
-Trends in tournament metrics over years.
+Trends in tournament metrics by level group.
 
 | Column Name        | Data Type | Description                                      |
 |--------------------|-----------|--------------------------------------------------|
 | PLAYER_NAME        | String    | Name of the player (e.g., "Novak Djokovic").     |
-| LEVEL_GROUP        | String    | Tournament level group (e.g., "Grand Slam", "ATP"). |
+| LEVEL_GROUP        | String    | Tournament level group (e.g., "Grand Slam", "Masters 1000", "ATP 250", "ATP 500", "Other"). |
 | MATCHES            | Integer   | Total matches played in the level group.        |
 | WINS               | Integer   | Number of matches won in the level group.       |
 | WIN_PERCENT        | Float     | Win rate (wins/matches) in the level group.     |
 
 - **Links**:
-  - `TOURNAMENT_STATS`, `MATCHES` via `LEVEL_GROUP` (as `TOURNEY_LEVEL`).
+  - `TOURNAMENT_STATS`, `MATCHES` via `LEVEL_GROUP` (mapped from `TOURNEY_LEVEL`).
   - `PLAYER_PERFORMANCE`, `PLAYER_YEARLY_PERFORMANCE`, `PLAYER_CONSISTENCY`, `PLAYER_PERFORMANCE_TRENDS`, `PLAYER_STATS`, `PLAYER_MATCHES_VIEW` via `PLAYER_NAME`.
 
-## PLAYER_MATCHES_VIEW (Table)
+## PLAYER_MATCHES_VIEW (View)
 Player-level view of match data.
 
 | Column Name        | Data Type | Description                                      |
 |--------------------|-----------|--------------------------------------------------|
-| PLAYER_NAME        | String    | Name of the player (e.g., "Roger Federer").      |
+| YEAR               | Integer   | Year of the match (derived from TOURNEY_DATE).   |
 | TOURNEY_LEVEL      | String    | Tournament level (e.g., "A" for ATP, "G" for Grand Slam). |
 | DRAW_SIZE          | Integer   | Number of players in the tournament draw.        |
 | PLAYER_ID          | Integer   | Unique identifier for the player.                |
-| YEAR               | Integer   | Year of the match.                              |
+| PLAYER_NAME        | String    | Name of the player (e.g., "Roger Federer").      |
 | HAND               | String    | Player’s dominant hand (e.g., "R", "L").         |
 | COUNTRY            | String    | Player’s country code (e.g., "SUI").            |
 | HEIGHT             | Integer   | Player’s height in centimeters.                 |

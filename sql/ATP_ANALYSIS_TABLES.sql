@@ -1,35 +1,85 @@
 CREATE OR REPLACE TABLE player_stats AS
 SELECT 
-    winner_name AS player_name,
-    COUNT(*) AS total_wins,
-    COUNT(DISTINCT tourney_name) AS tournaments_won,
-    SUM(CASE WHEN tourney_level = 'G' THEN 1 ELSE 0 END) AS grand_slam_wins,
-    AVG(w_1stWon::FLOAT / NULLIF(w_1stin, 0)) AS avg_first_serve_win_pct,
-    AVG(w_ace::FLOAT / NULLIF(w_svpt, 0)) AS avg_ace_pct
-FROM matches
-GROUP BY winner_name
-UNION
-SELECT 
-    loser_name AS player_name,
-    0 AS total_wins,
-    0 AS tournaments_won,
-    0 AS grand_slam_wins,
-    AVG(l_1stWon::FLOAT / NULLIF(l_1stin, 0)) AS avg_first_serve_win_pct,
-    AVG(l_ace::FLOAT / NULLIF(l_svpt, 0)) AS avg_ace_pct
-FROM matches
-GROUP BY loser_name;
+    player_id,
+    player_name,
+    SUM(CASE WHEN is_winner THEN 1 ELSE 0 END) AS total_wins,
+    COUNT(DISTINCT CASE WHEN is_winner AND ROUND = 'F' THEN tourney_name END) AS tournaments_won,
+    SUM(CASE WHEN is_winner AND tourney_level = 'G' AND ROUND = 'F' THEN 1 ELSE 0 END) AS grand_slam_wins,
+    AVG(CASE WHEN is_winner THEN W_1STWON::FLOAT / NULLIF(W_1STIN, 0) ELSE L_1STWON::FLOAT / NULLIF(L_1STIN, 0) END) AS avg_first_serve_win_pct,
+    AVG(CASE WHEN is_winner THEN W_ACE::FLOAT / NULLIF(W_SVPT, 0) ELSE L_ACE::FLOAT / NULLIF(L_SVPT, 0) END) AS avg_ace_pct
+FROM (
+    SELECT 
+        WINNER_ID AS player_id, 
+        WINNER_NAME AS player_name, 
+        TRUE AS is_winner, 
+        tourney_name, 
+        tourney_level, 
+        ROUND, 
+        W_1STWON, 
+        W_1STIN, 
+        W_ACE, 
+        W_SVPT,
+        L_1STWON, 
+        L_1STIN, 
+        L_ACE, 
+        L_SVPT
+    FROM matches
+    UNION ALL
+    SELECT 
+        LOSER_ID, 
+        LOSER_NAME, 
+        FALSE, 
+        tourney_name, 
+        tourney_level, 
+        ROUND, 
+        W_1STWON, 
+        W_1STIN, 
+        W_ACE, 
+        W_SVPT,
+        L_1STWON, 
+        L_1STIN, 
+        L_ACE, 
+        L_SVPT
+    FROM matches
+) AS combined
+GROUP BY player_id, player_name
+order by grand_slam_wins desc;
+
+
 
 
 CREATE OR REPLACE TABLE tournament_stats AS
+WITH final_wins AS (
+    SELECT 
+        tourney_name,
+        tourney_level,
+        surface,
+        WINNER_NAME AS top_winner,
+        COUNT(*) AS win_count,
+        ROW_NUMBER() OVER (
+            PARTITION BY tourney_name, tourney_level, surface 
+            ORDER BY COUNT(*) DESC, WINNER_NAME ASC
+        ) AS rn
+    FROM matches
+    WHERE ROUND = 'F' AND tourney_level != 'D'
+    GROUP BY tourney_name, tourney_level, surface, WINNER_NAME
+)
 SELECT 
-    tourney_name,
-    tourney_level,
-    surface,
+    m.tourney_name,
+    m.tourney_level,
+    m.surface,
     COUNT(*) AS total_matches,
-    AVG(minutes) AS avg_match_duration,
-    SUM(CASE WHEN tourney_level = 'G' THEN 1 ELSE 0 END) AS grand_slam_matches
-FROM matches
-GROUP BY tourney_name, tourney_level, surface;
+    AVG(m.minutes) AS avg_match_duration,
+    f.top_winner AS most_successful_player,
+    f.win_count AS top_winner_count
+FROM matches m
+LEFT JOIN final_wins f
+    ON m.tourney_name = f.tourney_name 
+    AND m.tourney_level = f.tourney_level 
+    AND m.surface = f.surface
+    AND f.rn = 1
+WHERE m.tourney_level != 'D'
+GROUP BY m.tourney_name, m.tourney_level, m.surface, f.top_winner, f.win_count;
 
 -- Base CTE for Player Matches
 -- This unions winner and loser data for per-player aggregations.
@@ -80,13 +130,15 @@ SELECT
     hand,
     COUNT(*) AS total_matches,
     SUM(is_win) AS wins,
+    wins/total_matches as win_rate,
     SUM(aces) AS total_aces,
     SUM(double_faults) AS total_double_faults,
     AVG(first_serve_pct) AS avg_first_serve_pct,
     AVG(bp_save_pct) AS avg_bp_save_pct
 FROM player_matches_view
 GROUP BY player_name, hand
-HAVING total_matches > 50;  -- Filter for significant players
+HAVING total_matches > 50
+order by win_rate desc;  -- Filter for significant players
 
 select * from player_performance;
 

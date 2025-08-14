@@ -213,8 +213,3 @@ matches_data_dictionary.txt
 *.key
 *.secret
 *.json                   # Any sensitive JSON
-# Tableau files
-*.twb
-*.twbx
-*.tds
-*.tdsx

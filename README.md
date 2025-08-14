@@ -18,10 +18,6 @@ Analyzes ATP tennis data (2000–2019) using Snowflake SQL, Snowpark Python, and
 4. Run `python/atp_analysis.ipynb` locally with Snowpark to generate CSVs (saved to `@tennis_stage`).
 5. Download CSVs from Snowflake for Tableau visualizations.
 
-# ATP Tennis Analysis Project
-
-This repository contains analysis of ATP tennis data from 2000–2019.
-
 ## Dashboards
 - **Player Performance Overview Dashboard**: An interactive visualization of player stats and trends.
   - [View Live Dashboard](https://public.tableau.com/shared/HM833SNFQ?:display_count=n&:origin=viz_share_link)

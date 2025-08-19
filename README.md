@@ -20,10 +20,10 @@ Analyzes ATP tennis data (2000–2019) using Snowflake SQL, Snowpark Python, and
 
 ## Dashboards
 - **Player Performance Overview Dashboard**: An interactive visualization of player stats and trends.
-  - [View Live Dashboard](https://public.tableau.com/shared/HM833SNFQ?:display_count=n&:origin=viz_share_link)
+  - [View Live Dashboard](https://public.tableau.com/views/Player_performance_Dashboard/Player_performance?:language=en-US&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link)
   - Source: [tableau/player_performance_dashboard.twb](tableau/player_performance_dashboard.twb)
 - **Tournament Domination Overview Dashboard**: An interactive visualization of player and how they did in tournaments.
-  - [View Live Dashboard](https://public.tableau.com/app/profile/atharva.mishra/viz/Tournament_Dashboard/Dashboard1?publish=yes)
+  - [View Live Dashboard](https://public.tableau.com/views/TournamentDominanceDashboardATP2000-2019/Dashboard1?:language=en-US&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link)
 
 ## Notes
 - CSVs are not included in this repository to comply with the CC BY-NC-SA 4.0 license.

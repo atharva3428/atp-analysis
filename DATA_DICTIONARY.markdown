@@ -25,11 +25,11 @@ Raw match data from the ATP dataset (2000–2019).
 | TOURNEY_NAME          | String    | Name of the tournament (e.g., "Auckland").            |
 | SURFACE               | String    | Court surface (e.g., "Hard", "Clay", "Grass").        |
 | DRAW_SIZE             | Integer   | Number of players in the tournament draw.             |
-| TOURNEY_LEVEL         | String    | Tournament level (e.g., "A" for ATP, "G" for Grand Slam, "D" for Davis Cup). |
+| TOURNEY_LEVEL         | String    | Tournament level (e.g., "A" for ATP, "G" for Grand Slam). |
 | MATCH_NUM             | Integer   | Match number in the tournament.                      |
 | WINNER_ID             | Integer   | Player ID of the match winner.                       |
 | WINNER_SEED           | String    | Seed of the winner (e.g., "1", "UNSEEDED").          |
-| WINNER_ENTRY          | String    | Entry type of the winner (e.g., "Q" for qualifier, "WC" for wildcard). |
+| WINNER_ENTRY          | String    | Entry type of the winner (e.g., "Q", "WC").          |
 | WINNER_NAME           | String    | Name of the match winner (e.g., "Tommy Haas").       |
 | WINNER_HAND           | String    | Winner’s dominant hand (e.g., "R", "L").             |
 | WINNER_HT             | Integer   | Winner’s height in centimeters.                      |
@@ -222,23 +222,24 @@ Aggregated statistics for tournaments, excluding Davis Cup (tourney_level = 'D')
 
 - **Links**:
   - `MATCHES` via `TOURNEY_NAME`, `TOURNEY_LEVEL`, `SURFACE`.
-  - `TOURNAMENT_TRENDS` via `TOURNEY_NAME`, `TOURNEY_LEVEL`.
+  - `TOURNAMENT_TRENDS` via `TOURNEY_NAME`, `PLAYER_NAME` (as `MOST_SUCCESSFUL_PLAYER`).
   - `SERVE_EFFECTIVENESS_BY_SURFACE` via `SURFACE`.
 
 ## TOURNAMENT_TRENDS (Table)
-Trends in tournament metrics by level group.
+Trends in tournament metrics per player and tournament.
 
-| Column Name        | Data Type | Description                                      |
-|--------------------|-----------|--------------------------------------------------|
-| PLAYER_NAME        | String    | Name of the player (e.g., "Novak Djokovic").     |
-| LEVEL_GROUP        | String    | Tournament level group (e.g., "Grand Slam", "Masters 1000", "ATP 250", "ATP 500", "Other"). |
-| MATCHES            | Integer   | Total matches played in the level group.        |
-| WINS               | Integer   | Number of matches won in the level group.       |
-| WIN_PERCENT        | Float     | Win rate (wins/matches) in the level group.     |
+| Column Name | Data Type | Description                                      |
+|-------------|-----------|--------------------------------------------------|
+| PLAYER_NAME | String    | Name of the player (e.g., "Novak Djokovic").     |
+| TOURNEY_NAME| String    | Name of the tournament (e.g., "Wimbledon").      |
+| MATCHES     | Integer   | Total matches played in the tournament.          |
+| WINS        | Integer   | Number of matches won in the tournament.         |
+| WIN_PERCENT | Float     | Win rate (wins/matches) in the tournament.       |
 
 - **Links**:
-  - `TOURNAMENT_STATS`, `MATCHES` via `LEVEL_GROUP` (mapped from `TOURNEY_LEVEL`).
-  - `PLAYER_PERFORMANCE`, `PLAYER_YEARLY_PERFORMANCE`, `PLAYER_CONSISTENCY`, `PLAYER_PERFORMANCE_TRENDS`, `PLAYER_STATS`, `PLAYER_MATCHES_VIEW` via `PLAYER_NAME`.
+  - `TOURNAMENT_STATS` via `TOURNEY_NAME`, `PLAYER_NAME` (as `MOST_SUCCESSFUL_PLAYER`).
+  - `MATCHES`, `PLAYER_MATCHES_VIEW` via `TOURNEY_NAME`, `PLAYER_NAME`.
+  - `PLAYER_PERFORMANCE`, `PLAYER_YEARLY_PERFORMANCE`, `PLAYER_CONSISTENCY`, `PLAYER_PERFORMANCE_TRENDS`, `PLAYER_STATS` via `PLAYER_NAME`.
 
 ## PLAYER_MATCHES_VIEW (View)
 Player-level view of match data.
@@ -247,6 +248,7 @@ Player-level view of match data.
 |--------------------|-----------|--------------------------------------------------|
 | YEAR               | Integer   | Year of the match (derived from TOURNEY_DATE).   |
 | TOURNEY_LEVEL      | String    | Tournament level (e.g., "A" for ATP, "G" for Grand Slam). |
+| TOURNEY_NAME       | String    | Name of the tournament (e.g., "Australian Open"). |
 | DRAW_SIZE          | Integer   | Number of players in the tournament draw.        |
 | PLAYER_ID          | Integer   | Unique identifier for the player.                |
 | PLAYER_NAME        | String    | Name of the player (e.g., "Roger Federer").      |
@@ -260,10 +262,12 @@ Player-level view of match data.
 | DOUBLE_FAULTS      | Integer   | Double faults by the player in the match.       |
 | FIRST_SERVE_PCT    | Float     | First serve percentage in the match.            |
 | BP_SAVE_PCT        | Float     | Break points saved percentage in the match.     |
+| ROUND              | String    | Tournament round (e.g., "R32", "F").            |
 
 - **Links**:
   - `PLAYERS` via `PLAYER_ID`, `PLAYER_NAME` (as `FIRST_NAME` + `LAST_NAME`), `HAND`, `COUNTRY`, `HEIGHT`.
-  - `MATCHES` via `PLAYER_ID` (`WINNER_ID`, `LOSER_ID`), `PLAYER_NAME` (`WINNER_NAME`, `LOSER_NAME`), `YEAR`, `TOURNEY_LEVEL`.
+  - `MATCHES` via `PLAYER_ID` (`WINNER_ID`, `LOSER_ID`), `PLAYER_NAME` (`WINNER_NAME`, `LOSER_NAME`), `YEAR`, `TOURNEY_LEVEL`, `TOURNEY_NAME`, `ROUND`.
   - `PLAYER_PERFORMANCE`, `PLAYER_YEARLY_PERFORMANCE`, `PLAYER_CONSISTENCY`, `PLAYER_PERFORMANCE_TRENDS`, `PLAYER_STATS` via `PLAYER_NAME`.
   - `SERVE_EFFECTIVENESS_BY_SURFACE` via `PLAYER_NAME`, `FIRST_SERVE_PCT`.
   - `AGE_IMPACT` via `YEAR`.
+  - `TOURNAMENT_TRENDS`, `TOURNAMENT_STATS` via `TOURNEY_NAME`, `PLAYER_NAME`.
